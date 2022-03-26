@@ -1,4 +1,4 @@
-FROM python
+FROM python:3-slim-buster
 
 RUN apt update && apt -y install bluetooth
 
