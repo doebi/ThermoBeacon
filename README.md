@@ -8,7 +8,7 @@
 
 ## Usage
     usage: tbcmd.py [-h] {scan,identify,query,dump} ...
-    
+
     positional arguments:
       {scan,identify,query,dump}
                         action
@@ -25,3 +25,11 @@
 [Brifit Bluetooth thermometer and hygrometer, wireless](https://www.amazon.de/-/en/gp/product/B08DLHFKT3/ref=ppx_yo_dt_b_asin_title_o00_s01?ie=UTF8&psc=1)
 
 [ORIA Wireless Thermometer Hygrometer](https://www.amazon.co.uk/dp/B08GKB5D1M/ref=emc_b_5_t)
+
+## Docker
+
+```
+docker save doebi/thermobeacon:latest | ssh -C pi@10.0.0.66 docker load
+
+docker run --privileged -d --restart=always -v /var/run/dbus/:/var/run/dbus/:z doebi/thermobeacon
+```
