@@ -3,6 +3,7 @@
 import sys, re, json, asyncio
 from argparse import ArgumentParser, Namespace
 import bleak
+import requests
 
 from bleak import BleakClient, BleakScanner
 from tb_protocol import *
@@ -12,16 +13,16 @@ TX_CHAR_UUID = '0000fff5-0000-1000-8000-00805F9B34FB'
 #Read Handle 0x0024
 RX_CHAR_UUID = '0000fff3-0000-1000-8000-00805F9B34FB'
 
-  
+
 def mac_addr(x):
     if not re.match("[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", x.lower()):
         raise ValueError()
     return x
 
- 
+
 parser = ArgumentParser()
 subparsers = parser.add_subparsers(help='action', dest='command', required=True)
- 
+
 sub = subparsers.add_parser('scan', help = "Scan for ThermoBeacon devices")
 sub.add_argument('-mac', type=mac_addr, required=False)
 sub.add_argument('-t', type=int, default = 20, metavar='<Scan duration, seconds>', required=False)
@@ -76,6 +77,17 @@ def detection_callback(device, advertisement_data):
         mac = device.address.lower()
         if len(bvalue)==18:
             data = TBAdvData(key, bvalue)
+            payload = {
+                "mac": mac,
+                "rssi": int(device.rssi),
+                "id": data.id,
+                "humidity": float(data.hum),
+                "temperature": float(data.tmp),
+                "battery": float(data.btr),
+                "uptime": int(data.upt),
+                "button": bool(data.btn),
+            }
+            r = requests.post('https://nr.doebi.at/thermobeacon', data=json.dumps(payload))
             print('[{0}] [{6:02x}] T= {1:5.2f}\xb0C, H = {2:3.2f}%, Button:{4}, Battery : {5:02.0f}%, UpTime = {3:8.0f}s'.\
                   format(mac, data.tmp, data.hum, data.upt, 'On ' if data.btn else 'Off', data.btr, data.id))
         else:
@@ -164,7 +176,6 @@ async def _identify(address):
         await client.write_gatt_char(TX_CHAR_UUID, cmd.get_msg())
     finally:
         await client.disconnect()
-    
+
 if __name__ == '__main__':
     main()
-
